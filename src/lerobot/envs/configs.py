@@ -174,6 +174,40 @@ class PushtEnv(EnvConfig):
         }
 
 
+@EnvConfig.register_subclass("synthetic_bimanual")
+@dataclass
+class SyntheticBimanualEnv(EnvConfig):
+    task: str | None = "SyntheticDualCam7D-v0"
+    fps: int = 20
+    episode_length: int = 120
+    image_height: int = 240
+    image_width: int = 320
+    features: dict[str, PolicyFeature] = field(
+        default_factory=lambda: {
+            ACTION: PolicyFeature(type=FeatureType.ACTION, shape=(7,)),
+            "agent_pos": PolicyFeature(type=FeatureType.STATE, shape=(7,)),
+            "pixels/fixed": PolicyFeature(type=FeatureType.VISUAL, shape=(240, 320, 3)),
+            "pixels/handeye": PolicyFeature(type=FeatureType.VISUAL, shape=(240, 320, 3)),
+        }
+    )
+    features_map: dict[str, str] = field(
+        default_factory=lambda: {
+            ACTION: ACTION,
+            "agent_pos": OBS_STATE,
+            "pixels/fixed": f"{OBS_IMAGES}.fixed",
+            "pixels/handeye": f"{OBS_IMAGES}.handeye",
+        }
+    )
+
+    @property
+    def gym_kwargs(self) -> dict:
+        return {
+            "max_episode_steps": self.episode_length,
+            "image_height": self.image_height,
+            "image_width": self.image_width,
+        }
+
+
 @dataclass
 class ImagePreprocessingConfig:
     crop_params_dict: dict[str, tuple[int, int, int, int]] | None = None
